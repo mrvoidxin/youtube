@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Theme -->
+    <color name="bg_primary">#FF0F0F0F</color>
+    <color name="bg_secondary">#FF212121</color>
+    <color name="bg_elevated">#FF3D3D3D</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFAAAAAA</color>
+    <color name="text_tertiary">#FF717171</color>
+    <color name="accent_red">#FFFF0000</color>
+    <color name="chip_bg">#FF272727</color>
+    <color name="chip_selected">#FFFFFFFF</color>
+    <color name="divider_color">#FF3D3D3D</color>
+    <color name="like_blue">#FF3EA6FF</color>
+    <color name="live_red">#FFFF0000</color>
+
+    <!-- Light Theme -->
+    <color name="bg_primary_light">#FFFFFFFF</color>
+    <color name="bg_secondary_light">#FFF2F2F2</color>
+    <color name="text_primary_light">#FF0F0F0F</color>
+    <color name="text_secondary_light">#FF606060</color>
+    <color name="chip_bg_light">#FFE5E5E5</color>
+    <color name="chip_selected_light">#FF0F0F0F</color>
+
+    <!-- Player -->
+    <color name="player_overlay">#99000000</color>
+    <color name="player_bg">#FF000000</color>
+</resources>

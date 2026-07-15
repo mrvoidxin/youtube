@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="18dp"
+    android:viewportWidth="80"
+    android:viewportHeight="18">
+
+    <!-- Red play button background -->
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M15,1 L27,9 L15,17 Z" />
+
+    <!-- White text "YouTube" -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,4 L40,4 L40,14 L35,14 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,4 L48,4 L51,9 L54,4 L59,4 L59,14 L55,14 L55,7 L52,12 L49,12 L46,7 L46,14 L42,14 L42,4 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,4 L67,4 L67,14 L63,14 L63,4 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,4 L75,4 L75,14 L71,14 Z" />
+
+</vector>
