@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,15 +42,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.youtubeclone.presentation.screens.auth.AuthScreen
 import com.youtubeclone.presentation.screens.channel.ChannelScreen
 import com.youtubeclone.presentation.screens.home.HomeScreen
 import com.youtubeclone.presentation.screens.library.HistoryScreen
 import com.youtubeclone.presentation.screens.library.LibraryScreen
 import com.youtubeclone.presentation.screens.library.LikedVideosScreen
 import com.youtubeclone.presentation.screens.library.WatchLaterScreen
+import com.youtubeclone.presentation.screens.register.RegisterScreen
 import com.youtubeclone.presentation.screens.search.SearchScreen
 import com.youtubeclone.presentation.screens.settings.SettingsScreen
 import com.youtubeclone.presentation.screens.shorts.ShortsScreen
+import com.youtubeclone.presentation.screens.splash.SplashScreen
 import com.youtubeclone.presentation.screens.watch.WatchScreen
 import com.youtubeclone.presentation.theme.BottomNavBg
 import com.youtubeclone.presentation.theme.TextPrimary
@@ -154,33 +160,75 @@ fun YouTubeNavGraph(
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(paddingValues),
             enterTransition = {
-                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                fadeIn(animationSpec = tween(300)) + slideIn(
                     AnimatedContentTransitionScope.SlideDirection.Start,
                     tween(300)
                 )
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                fadeOut(animationSpec = tween(300)) + slideOut(
                     AnimatedContentTransitionScope.SlideDirection.Start,
                     tween(300)
                 )
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                fadeIn(animationSpec = tween(300)) + slideIn(
                     AnimatedContentTransitionScope.SlideDirection.End,
                     tween(300)
                 )
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                fadeOut(animationSpec = tween(300)) + slideOut(
                     AnimatedContentTransitionScope.SlideDirection.End,
                     tween(300)
                 )
             }
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onAuthComplete = { isAuthenticated ->
+                        if (isAuthenticated) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Auth.route) {
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Auth.route) {
+                AuthScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Auth.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToRegister = {
+                        navController.navigate(Screen.Register.route)
+                    }
+                )
+            }
+
+            composable(Screen.Register.route) {
+                RegisterScreen(
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Register.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
             composable(Screen.Home.route) {
                 HomeScreen(
                     onVideoClick = { videoId ->

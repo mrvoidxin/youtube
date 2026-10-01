@@ -20,7 +20,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyBPTQbHM2wqBo9BwKIW3FVWYHlrePQzcAY\"")
+        // API keys are now handled by backend, not in client
+        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:3000/api/\"")
     }
 
     buildTypes {

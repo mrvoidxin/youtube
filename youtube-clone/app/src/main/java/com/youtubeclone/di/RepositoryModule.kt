@@ -1,9 +1,12 @@
 package com.youtubeclone.di
 
+import com.youtubeclone.data.api.BackendApiService
 import com.youtubeclone.data.api.YouTubeApiService
 import com.youtubeclone.data.local.dao.HistoryDao
 import com.youtubeclone.data.local.dao.LikedVideoDao
 import com.youtubeclone.data.local.dao.WatchLaterDao
+import com.youtubeclone.data.repository.AuthRepository
+import com.youtubeclone.data.repository.BackendVideoRepository
 import com.youtubeclone.data.repository.LocalRepository
 import com.youtubeclone.data.repository.SearchRepository
 import com.youtubeclone.data.repository.VideoRepository
@@ -16,6 +19,18 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(apiService: BackendApiService): AuthRepository {
+        return AuthRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBackendVideoRepository(apiService: BackendApiService): BackendVideoRepository {
+        return BackendVideoRepository(apiService)
+    }
 
     @Provides
     @Singleton

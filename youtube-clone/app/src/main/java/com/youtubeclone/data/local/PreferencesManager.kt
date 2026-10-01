@@ -1,115 +1,168 @@
 package com.youtubeclone.data.local
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
+import com.google.gson.Gson
 import com.youtubeclone.utils.Constants
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = Constants.DATASTORE_NAME)
 
 @Singleton
 class PreferencesManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val dataStore = context.dataStore
+    private val gson = Gson()
 
-    companion object {
-        private val KEY_DARK_MODE = booleanPreferencesKey("dark_mode")
-        private val KEY_PLAYBACK_SPEED = stringPreferencesKey("playback_speed")
-        private val KEY_PLAYBACK_QUALITY = stringPreferencesKey("playback_quality")
-        private val KEY_AUTOPLAY = booleanPreferencesKey("autoplay")
-        private val KEY_CAPTIONS_ENABLED = booleanPreferencesKey("captions_enabled")
-        private val KEY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
-        private val KEY_RESTRICTED_MODE = booleanPreferencesKey("restricted_mode")
-        private val KEY_DATA_SAVER = booleanPreferencesKey("data_saver")
+    // Create or get the EncryptedSharedPreferences
+    private val encryptedSharedPreferences: SharedPreferences by lazy {
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        EncryptedSharedPreferences.create(
+            Constants.DATASTORE_NAME,
+            masterKeyAlias,
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 
-    val isDarkMode: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_DARK_MODE] ?: true
+    // ============================================
+    // AUTHENTICATION TOKENS
+    // ============================================
+
+    fun saveAccessToken(token: String) {
+        encryptedSharedPreferences.edit()
+            .putString(Constants.KEY_ACCESS_TOKEN, token)
+            .apply()
     }
 
-    val playbackSpeed: Flow<String> = dataStore.data.map { prefs ->
-        prefs[KEY_PLAYBACK_SPEED] ?: "1.0"
+    fun getAccessToken(): String? {
+        return encryptedSharedPreferences.getString(Constants.KEY_ACCESS_TOKEN, null)
     }
 
-    val playbackQuality: Flow<String> = dataStore.data.map { prefs ->
-        prefs[KEY_PLAYBACK_QUALITY] ?: "auto"
+    fun clearAccessToken() {
+        encryptedSharedPreferences.edit()
+            .remove(Constants.KEY_ACCESS_TOKEN)
+            .apply()
     }
 
-    val isAutoplayEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_AUTOPLAY] ?: true
+    fun saveRefreshToken(token: String) {
+        encryptedSharedPreferences.edit()
+            .putString(Constants.KEY_REFRESH_TOKEN, token)
+            .apply()
     }
 
-    val isCaptionsEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_CAPTIONS_ENABLED] ?: false
+    fun getRefreshToken(): String? {
+        return encryptedSharedPreferences.getString(Constants.KEY_REFRESH_TOKEN, null)
     }
 
-    val isNotificationsEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_NOTIFICATIONS_ENABLED] ?: true
+    fun clearRefreshToken() {
+        encryptedSharedPreferences.edit()
+            .remove(Constants.KEY_REFRESH_TOKEN)
+            .apply()
     }
 
-    val isRestrictedMode: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_RESTRICTED_MODE] ?: false
+    fun saveTokenExpiry(expiry: Long) {
+        encryptedSharedPreferences.edit()
+            .putLong(Constants.KEY_TOKEN_EXPIRY, expiry)
+            .apply()
     }
 
-    val isDataSaverEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[KEY_DATA_SAVER] ?: false
+    fun getTokenExpiry(): Long {
+        return encryptedSharedPreferences.getLong(Constants.KEY_TOKEN_EXPIRY, 0L)
     }
 
-    suspend fun setDarkMode(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_DARK_MODE] = enabled
+    fun clearTokenExpiry() {
+        encryptedSharedPreferences.edit()
+            .remove(Constants.KEY_TOKEN_EXPIRY)
+            .apply()
+    }
+
+    fun isTokenValid(): Boolean {
+        val expiry = getTokenExpiry()
+        val currentTime = System.currentTimeMillis()
+        return expiry > currentTime + Constants.TOKEN_REFRESH_MARGIN_MS
+    }
+
+    fun clearAuthTokens() {
+        clearAccessToken()
+        clearRefreshToken()
+        clearTokenExpiry()
+    }
+
+    // ============================================
+    // USER PREFERENCES
+    // ============================================
+
+    fun saveDarkMode(isDark: Boolean) {
+        encryptedSharedPreferences.edit()
+            .putBoolean(Constants.KEY_DARK_MODE, isDark)
+            .apply()
+    }
+
+    fun isDarkMode(): Boolean {
+        return encryptedSharedPreferences.getBoolean(Constants.KEY_DARK_MODE, true)
+    }
+
+    fun savePlaybackSpeed(speed: Float) {
+        encryptedSharedPreferences.edit()
+            .putFloat(Constants.KEY_PLAYBACK_SPEED, speed)
+            .apply()
+    }
+
+    fun getPlaybackSpeed(): Float {
+        return encryptedSharedPreferences.getFloat(Constants.KEY_PLAYBACK_SPEED, 1.0f)
+    }
+
+    // ============================================
+    // SEARCH HISTORY
+    // ============================================
+
+    fun saveRecentSearches(searches: List<String>) {
+        val json = gson.toJson(searches)
+        encryptedSharedPreferences.edit()
+            .putString(Constants.KEY_RECENT_SEARCHES, json)
+            .apply()
+    }
+
+    fun getRecentSearches(): List<String> {
+        val json = encryptedSharedPreferences.getString(Constants.KEY_RECENT_SEARCHES, null)
+        return if (json != null) {
+            try {
+                gson.fromJson(json, Array<String>::class.java).toList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } else {
+            emptyList()
         }
     }
 
-    suspend fun setPlaybackSpeed(speed: String) {
-        dataStore.edit { prefs ->
-            prefs[KEY_PLAYBACK_SPEED] = speed
+    fun addRecentSearch(query: String) {
+        val searches = getRecentSearches().toMutableList()
+        searches.remove(query)
+        searches.add(0, query)
+        if (searches.size > 10) {
+            searches.removeAt(searches.size - 1)
         }
+        saveRecentSearches(searches)
     }
 
-    suspend fun setPlaybackQuality(quality: String) {
-        dataStore.edit { prefs ->
-            prefs[KEY_PLAYBACK_QUALITY] = quality
-        }
+    fun clearRecentSearches() {
+        encryptedSharedPreferences.edit()
+            .remove(Constants.KEY_RECENT_SEARCHES)
+            .apply()
     }
 
-    suspend fun setAutoplay(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_AUTOPLAY] = enabled
-        }
-    }
+    // ============================================
+    // CLEAR ALL
+    // ============================================
 
-    suspend fun setCaptionsEnabled(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_CAPTIONS_ENABLED] = enabled
-        }
-    }
-
-    suspend fun setNotificationsEnabled(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_NOTIFICATIONS_ENABLED] = enabled
-        }
-    }
-
-    suspend fun setRestrictedMode(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_RESTRICTED_MODE] = enabled
-        }
-    }
-
-    suspend fun setDataSaver(enabled: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[KEY_DATA_SAVER] = enabled
-        }
+    fun clearAll() {
+        encryptedSharedPreferences.edit()
+            .clear()
+            .apply()
     }
 }

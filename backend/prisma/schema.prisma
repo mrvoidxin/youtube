@@ -1,0 +1,252 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  googleId      String?   @unique
+  displayName   String
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  channels              Channel[]
+  subscriptions         Subscription[]         @relation("UserSubscriptions")
+  comments              Comment[]
+  likes                 Like[]
+  watchHistory          WatchHistory[]
+  refreshTokens         RefreshToken[]
+
+  @@index([email])
+  @@index([googleId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ============================================
+// CHANNEL & VIDEO METADATA CACHE
+// ============================================
+
+model Channel {
+  id               String   @id @default(uuid())
+  ownerUserId      String
+  owner            User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  youtubeChannelId String?  @unique
+  name             String
+  bannerUrl        String?
+  avatarUrl        String?
+  description      String?
+  subscriberCount  Int?
+  viewCount        Int?    @default(0)
+  videoCount       Int?    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  videos               Video[]
+  subscriptions        Subscription[]         @relation("ChannelSubscriptions")
+  playlists            Playlist[]
+
+  @@index([ownerUserId])
+  @@index([youtubeChannelId])
+}
+
+model Video {
+  id               String   @id @default(uuid())
+  youtubeVideoId   String   @unique
+  channelId        String
+  channel          Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  thumbnailUrl     String?
+  duration         String?
+  viewCount        Int?    @default(0)
+  likeCount        Int?    @default(0)
+  dislikeCount     Int?    @default(0)
+  commentCount     Int?    @default(0)
+  publishedAt      DateTime?
+  isShort          Boolean  @default(false)
+  categoryId       String?
+  tags             String[] @default([])
+  statsJson        Json?
+  fetchedAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  comments         Comment[]
+  likes            Like[]
+  watchHistory     WatchHistory[]
+  playlistItems    PlaylistItem[]
+
+  @@index([youtubeVideoId])
+  @@index([channelId])
+  @@index([publishedAt])
+}
+
+// ============================================
+// SUBSCRIPTIONS
+// ============================================
+
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  channelId String
+  channel   Channel  @relation("ChannelSubscriptions", fields: [channelId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, channelId])
+  @@index([userId])
+  @@index([channelId])
+}
+
+// ============================================
+// COMMENTS & LIKES
+// ============================================
+
+model Comment {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  youtubeCommentId String?  @unique
+  videoId          String
+  video            Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  parentCommentId  String?
+  parentComment    Comment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies          Comment[] @relation("CommentReplies")
+  body             String
+  likeCount        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([videoId])
+  @@index([userId])
+  @@index([parentCommentId])
+}
+
+model Like {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType   String   // "video" | "comment"
+  targetId     String
+  value        String   // "like" | "dislike"
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+  @@index([targetType, targetId])
+}
+
+// ============================================
+// WATCH HISTORY
+// ============================================
+
+model WatchHistory {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId       String
+  video         Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  watchedAt     DateTime @default(now())
+  progressSeconds Int     @default(0)
+  duration      Int?
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+  @@index([watchedAt])
+}
+
+// ============================================
+// PLAYLISTS
+// ============================================
+
+model Playlist {
+  id          String   @id @default(uuid())
+  channelId   String
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  youtubePlaylistId String? @unique
+  title       String
+  description String?
+  thumbnailUrl String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  playlistItems PlaylistItem[]
+
+  @@index([channelId])
+  @@index([youtubePlaylistId])
+}
+
+model PlaylistItem {
+  id          String   @id @default(uuid())
+  playlistId  String
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  videoId     String
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  position    Int
+  addedAt     DateTime @default(now())
+
+  @@unique([playlistId, videoId])
+  @@index([playlistId])
+  @@index([videoId])
+}
+
+// ============================================
+// SEARCH HISTORY (cached locally on client, but can sync to server)
+// ============================================
+
+model SearchHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  searchedAt DateTime @default(now())
+
+  @@unique([userId, query])
+  @@index([userId])
+  @@index([searchedAt])
+}
+
+// ============================================
+// YOU TUBE API QUOTA TRACKING
+// ============================================
+
+model YouTubeApiUsage {
+  id        String   @id @default(uuid())
+  endpoint  String   // e.g., "search.list", "videos.list"
+  date      DateTime @default(now())
+  requestCount Int    @default(0)
+  quotaUsed  Int    @default(0)
+
+  @@unique([endpoint, date])
+  @@index([date])
+}

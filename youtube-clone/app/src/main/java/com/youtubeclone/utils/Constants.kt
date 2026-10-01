@@ -1,8 +1,11 @@
 package com.youtubeclone.utils
 
 object Constants {
-    const val BASE_URL = "https://www.googleapis.com/youtube/v3/"
-    const val API_KEY = "AIzaSyBPTQbHM2wqBo9BwKIW3FVWYHlrePQzcAY"
+    // Backend API - The client only talks to backend, never directly to YouTube
+    const val BACKEND_BASE_URL = "http://10.0.2.2:3000/api/"
+    
+    // YouTube API (for reference, not used directly in client)
+    const val YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3/"
     const val YOUTUBE_BASE_URL = "https://www.youtube.com/"
     const val YOUTUBE_SHORT_URL = "https://youtu.be/"
 
@@ -56,4 +59,10 @@ object Constants {
     const val KEY_PLAYBACK_SPEED = "playback_speed"
 
     const val CHANNEL_TABS = listOf("Home", "Videos", "Shorts", "Live", "Playlists", "About")
+    
+    // Authentication
+    const val KEY_ACCESS_TOKEN = "access_token"
+    const val KEY_REFRESH_TOKEN = "refresh_token"
+    const val KEY_TOKEN_EXPIRY = "token_expiry"
+    const val TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000L // 5 minutes before expiry
 }
