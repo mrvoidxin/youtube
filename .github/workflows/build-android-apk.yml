@@ -31,17 +31,28 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # Step 3: Setup Android SDK with all required components
+      # Step 3: Setup Android SDK using cmdline-tools
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          sdk-platform: 'android-34'
-          sdk-build-tools: '34.0.0'
-          sdk-cmake: '3.10.2'
-          ndk-version: '26.2.11394342'
-          accept-licenses: true
+          cmdline-tools-version: '10.0'
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: true
 
-      # Step 4: Cache Gradle dependencies for faster builds
+      # Step 4: Install required Android packages
+      - name: Install Android packages
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" "emulator" "patcher;v4"
+          sdkmanager --list
+        env:
+          ANDROID_HOME: /usr/local/android-sdk
+
+      # Step 5: Accept all SDK licenses (fallback)
+      - name: Accept SDK licenses
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+
+      # Step 6: Cache Gradle dependencies
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
@@ -53,29 +64,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # Step 5: Make gradlew executable
+      # Step 7: Make gradlew executable
       - name: Make gradlew executable
         run: |
           cd youtube-clone
           chmod +x gradlew
 
-      # Step 6: Accept all SDK licenses (fallback)
-      - name: Accept SDK licenses
-        run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          yes | sdkmanager --sdk_root=${{ env.ANDROID_HOME }} --licenses > /dev/null 2>&1 || true
-
-      # Step 7: Build Debug APK
+      # Step 8: Build Debug APK
       - name: Build Debug APK
         run: |
           cd youtube-clone
           ./gradlew clean assembleDebug --no-daemon --stacktrace
         env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+          ANDROID_HOME: /usr/local/android-sdk
+          ANDROID_SDK_ROOT: /usr/local/android-sdk
           ORG_GRADLE_PROJECT_android_suppressUnsupportedCompileSdk: '34'
 
-      # Step 8: Verify APK exists
+      # Step 9: Verify APK exists
       - name: Verify APK
         id: verify_apk
         run: |
@@ -90,7 +95,7 @@ jobs:
             exit 1
           fi
 
-      # Step 9: Upload APK as artifact
+      # Step 10: Upload APK as artifact
       - name: Upload APK
         if: success() && steps.verify_apk.outputs.apk_path != ''
         uses: actions/upload-artifact@v4
@@ -100,7 +105,7 @@ jobs:
           retention-days: 30
           compression-level: 9
 
-      # Step 10: Show success message
+      # Step 11: Show success message
       - name: Build Success
         if: success()
         run: |
