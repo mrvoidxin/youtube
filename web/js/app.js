@@ -16,15 +16,17 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&'
 
 function toast(message) { const element = $('toast'); if (!element) return; element.textContent = message; element.classList.add('show'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => element.classList.remove('show'), 2200); }
 function filtered() {
-  if (state.apiItems.length) return state.apiItems;
-  let list = [...videos];
-  if (state.category !== 'All' && state.category !== 'Recently uploaded') { const matches = categoryAliases[state.category] || [state.category]; list = list.filter((video) => matches.includes(video.category)); }
-  if (state.query) { const query = state.query.toLowerCase(); list = list.filter((video) => `${video.title} ${video.creator} ${video.channel} ${video.category}`.toLowerCase().includes(query)); }
-  return list;
+  return state.apiItems;
 }
 function normalizeApiVideo(item) {
-  const duration = item.duration || '—';
-  return { id: item.youtubeVideoId || item.id, title: item.title, channel: item.channel?.name || item.channelTitle || 'YouTube creator', creator: item.channel?.name || item.channelTitle || 'YouTube creator', views: `${Number(item.viewCount || 0).toLocaleString()} views`, date: item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 'Recently uploaded', duration, category: 'YouTube', description: item.description || '', avatar: item.channel?.avatarUrl || 'https://i.pravatar.cc/80?img=12', thumb: item.thumbnailUrl };
+  const duration = item.duration ? formatDuration(item.duration) : '—';
+  return { id: item.youtubeVideoId || item.id, title: item.title || 'Untitled video', channel: item.channel?.name || item.channelTitle || 'YouTube creator', creator: item.channel?.name || item.channelTitle || 'YouTube creator', views: `${Number(item.viewCount || 0).toLocaleString()} views`, date: item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 'Recently uploaded', duration, category: 'YouTube', description: item.description || '', avatar: item.channel?.avatarUrl || 'https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/youtubelogo.svg', thumb: item.thumbnailUrl };
+}
+function formatDuration(value) {
+  const match = String(value).match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return value;
+  const parts = [Number(match[1] || 0), Number(match[2] || 0), Number(match[3] || 0)];
+  return parts[0] ? `${parts[0]}:${String(parts[1]).padStart(2, '0')}:${String(parts[2]).padStart(2, '0')}` : `${parts[1]}:${String(parts[2]).padStart(2, '0')}`;
 }
 async function fetchCatalog({ reset = false } = {}) {
   const requestId = ++state.requestId;
@@ -57,7 +59,7 @@ function renderVideos() {
   const matches = filtered();
   const list = matches.slice(0, state.visible);
   $('videoGrid').innerHTML = list.length ? list.map((video) => `<article class="video-card" data-video="${video.id}" tabindex="0"><div class="thumbnail"><img loading="lazy" src="${video.thumb}" alt="${escapeHtml(video.title)}"><span class="duration">${video.duration}</span></div><div class="video-details"><img class="creator-avatar" src="${video.avatar}" alt="${escapeHtml(video.channel)} avatar"><div><h3 class="video-title">${escapeHtml(video.title)}</h3><span class="channel-name">${escapeHtml(video.channel)} <i class="fas fa-check-circle" aria-label="Verified"></i></span><span class="video-meta">${video.views} · ${video.date}</span></div></div></article>`).join('') : `<div class="empty-state"><h3>${escapeHtml(state.apiError || 'No videos found')}</h3><p>${state.apiError ? 'Check your connection and try again.' : 'Try another search or topic.'}</p></div>`;
-  document.querySelectorAll('.video-card').forEach((card) => { const open = () => openPlayer(videos.find((video) => video.id === card.dataset.video)); card.addEventListener('click', open); card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } }); });
+  document.querySelectorAll('.video-card').forEach((card) => { const open = () => openPlayer(matches.find((video) => video.id === card.dataset.video)); card.addEventListener('click', open); card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } }); });
   $('loadMore').style.display = matches.length > state.visible ? 'block' : 'none';
 }
 function loadMore() { if (state.loading || (!state.nextPageToken && state.apiItems.length)) return; $('loadMore').classList.add('is-loading'); if (state.apiItems.length || state.query || state.category !== 'All') fetchCatalog(); else { state.visible += 8; $('loadMore').classList.remove('is-loading'); renderVideos(); } }
