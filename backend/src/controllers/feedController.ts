@@ -21,7 +21,7 @@ router.get(
 
     try {
       // Try to get from cache first
-      const cacheKey = `feed:${userId || 'guest'}:${query.categoryId || 'all'}:${query.page}`;
+      const cacheKey = `feed:${userId || 'guest'}:${query.categoryId || 'all'}:${query.page}:${query.pageToken || 'first'}`;
       const cached = await getCached(cacheKey);
       if (cached) {
         return res.json({ ...cached, isCached: true });
@@ -33,7 +33,7 @@ router.get(
         'mostPopular',
         'US',
         query.pageSize,
-        undefined,
+        query.pageToken,
         query.categoryId
       );
 
@@ -124,7 +124,7 @@ router.get(
     } catch (error) {
       if (error instanceof QuotaExceededError) {
         // Fallback to cached data if quota exceeded
-        const cacheKey = `feed:${userId || 'guest'}:${query.categoryId || 'all'}:${query.page}`;
+        const cacheKey = `feed:${userId || 'guest'}:${query.categoryId || 'all'}:${query.page}:${query.pageToken || 'first'}`;
         const cached = await getCached(cacheKey);
         if (cached) {
           return res.json({ ...cached, isCached: true, quotaExceeded: true });
