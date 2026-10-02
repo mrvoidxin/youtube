@@ -1,0 +1,24 @@
+{
+  "name": "youtube-clone-web",
+  "version": "1.0.0",
+  "description": "YouTube Clone Web Player - Browser-based version",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . --port 5500",
+    "build": "echo 'Static site - no build required'"
+  },
+  "keywords": [
+    "youtube",
+    "clone",
+    "web",
+    "player",
+    "video"
+  ],
+  "author": "mrvoidxin",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Clone - Web Player</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-btn" id="menuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <i class="fab fa-youtube"></i>
+                    <span>YouTube Clone</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search videos...">
+                    <button class="search-btn" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" id="createBtn">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="icon-btn" id="appsBtn">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="icon-btn" id="notificationsBtn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="icon-btn user-btn" id="userBtn">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Categories -->
+            <div class="categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="music">Music</button>
+                <button class="category-btn" data-category="gaming">Gaming</button>
+                <button class="category-btn" data-category="news">News</button>
+                <button class="category-btn" data-category="sports">Sports</button>
+                <button class="category-btn" data-category="movies">Movies</button>
+                <button class="category-btn" data-category="live">Live</button>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="videos-grid" id="videosGrid">
+                <!-- Videos will be loaded here -->
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading videos...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Video Player Modal -->
+        <div class="modal" id="playerModal">
+            <div class="modal-content">
+                <div class="player-header">
+                    <button class="close-btn" id="closePlayer">&times;</button>
+                </div>
+                <div class="video-container">
+                    <iframe id="videoFrame" width="100%" height="100%" 
+                            src="" frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                </div>
+                <div class="video-info" id="videoInfo">
+                    <h2 id="videoTitle">Video Title</h2>
+                    <div class="video-stats">
+                        <span id="videoViews">0 views</span>
+                        <span id="videoDate">Jan 1, 2024</span>
+                    </div>
+                    <div class="channel-info">
+                        <div class="channel-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="channel-details">
+                            <h3 id="channelName">Channel Name</h3>
+                            <p id="channelSubs">0 subscribers</p>
+                        </div>
+                        <button class="subscribe-btn" id="subscribeBtn">Subscribe</button>
+                    </div>
+                    <div class="video-description" id="videoDescription">
+                        <p>Video description will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fab fa-youtube"></i>
+                    <span>YouTube Clone</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-section="shorts">
+                    <i class="fas fa-bolt"></i>
+                    <span>Shorts</span>
+                </a>
+                <a href="#" class="nav-item" data-section="subscriptions">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Subscriptions</span>
+                </a>
+                <hr class="divider">
+                <a href="#" class="nav-item" data-section="library">
+                    <i class="fas fa-folder"></i>
+                    <span>Library</span>
+                </a>
+                <a href="#" class="nav-item" data-section="history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item" data-section="watch-later">
+                    <i class="fas fa-clock"></i>
+                    <span>Watch later</span>
+                </a>
+                <a href="#" class="nav-item" data-section="liked">
+                    <i class="fas fa-thumbs-up"></i>
+                    <span>Liked videos</span>
+                </a>
+                <hr class="divider">
+                <a href="#" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="nav-item" data-section="help">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Overlay -->
+        <div class="overlay" id="overlay"></div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
