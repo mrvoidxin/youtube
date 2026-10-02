@@ -4,8 +4,8 @@
   "description": "YouTube Clone Web Player - Browser-based version",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve .",
-    "dev": "npx serve . --port 5500",
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 5500",
     "build": "echo 'Static site - no build required'"
   },
   "keywords": [
