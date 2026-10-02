@@ -21,21 +21,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
 
-      # Step 2: Setup JDK 17 (using latest version)
+      # Step 2: Setup JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      # Step 3: Setup Android SDK using cmdline-tools
+      # Step 3: Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
           cmdline-tools-version: '10.0'
           accept-android-sdk-licenses: true
-          log-accepted-android-sdk-licenses: true
 
       # Step 4: Install required Android packages
       - name: Install Android packages
@@ -45,14 +43,13 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/android-sdk
 
-      # Step 5: Accept all SDK licenses (fallback)
+      # Step 5: Accept all SDK licenses
       - name: Accept SDK licenses
-        run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+        run: yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
-      # Step 6: Cache Gradle dependencies
+      # Step 6: Cache Gradle dependencies (using latest cache action)
       - name: Cache Gradle dependencies
-        uses: actions/cache@v3.3.4
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
