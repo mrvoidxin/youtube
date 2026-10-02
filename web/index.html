@@ -1,162 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Clone - Web Player</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f0f">
+  <meta name="description" content="Stream the latest videos, shorts, music, and creator stories.">
+  <title>Pulse — Video for everyone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <button class="menu-btn" id="menuBtn">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="logo">
-                    <i class="fab fa-youtube"></i>
-                    <span>YouTube Clone</span>
-                </div>
-            </div>
-            <div class="header-center">
-                <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="Search videos...">
-                    <button class="search-btn" id="searchBtn">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="header-right">
-                <button class="icon-btn" id="createBtn">
-                    <i class="fas fa-video"></i>
-                </button>
-                <button class="icon-btn" id="appsBtn">
-                    <i class="fas fa-th"></i>
-                </button>
-                <button class="icon-btn" id="notificationsBtn">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="icon-btn user-btn" id="userBtn">
-                    <i class="fas fa-user-circle"></i>
-                </button>
-            </div>
-        </header>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-row">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation"><i class="fas fa-bars"></i></button>
+        <button class="brand" id="brand" data-section="home" aria-label="Pulse home"><span class="brand-mark"><i class="fas fa-play"></i></span><span>pulse</span></button>
+      </div>
+      <form class="searchbar" id="searchForm" role="search">
+        <i class="fas fa-search search-leading"></i>
+        <input id="searchInput" type="search" autocomplete="off" placeholder="Search videos, creators, topics" aria-label="Search videos">
+        <button class="search-submit" aria-label="Submit search"><i class="fas fa-arrow-right"></i></button>
+        <div class="suggestions" id="suggestions" hidden></div>
+      </form>
+      <div class="top-actions">
+        <button class="icon-btn hide-mobile" id="createBtn" aria-label="Create"><i class="fas fa-plus"></i></button>
+        <button class="icon-btn hide-mobile" id="notificationBtn" aria-label="Notifications"><i class="far fa-bell"></i><span class="notification-dot"></span></button>
+        <button class="avatar avatar-small" id="profileBtn" aria-label="Open profile">AK</button>
+      </div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Categories -->
-            <div class="categories">
-                <button class="category-btn active" data-category="all">All</button>
-                <button class="category-btn" data-category="music">Music</button>
-                <button class="category-btn" data-category="gaming">Gaming</button>
-                <button class="category-btn" data-category="news">News</button>
-                <button class="category-btn" data-category="sports">Sports</button>
-                <button class="category-btn" data-category="movies">Movies</button>
-                <button class="category-btn" data-category="live">Live</button>
-            </div>
+    <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+      <nav class="nav-list">
+        <button class="nav-item active" data-section="home"><i class="fas fa-house"></i><span>Home</span></button>
+        <button class="nav-item" data-section="shorts"><i class="fas fa-bolt"></i><span>Shorts</span><span class="nav-badge">new</span></button>
+        <button class="nav-item" data-section="subscriptions"><i class="fas fa-layer-group"></i><span>Subscriptions</span></button>
+      </nav>
+      <div class="nav-divider"></div>
+      <p class="nav-label">Your space</p>
+      <nav class="nav-list">
+        <button class="nav-item" data-section="history"><i class="fas fa-clock-rotate-left"></i><span>History</span></button>
+        <button class="nav-item" data-section="liked"><i class="fas fa-thumbs-up"></i><span>Liked videos</span></button>
+        <button class="nav-item" data-section="watch-later"><i class="fas fa-bookmark"></i><span>Watch later</span></button>
+      </nav>
+      <div class="nav-divider"></div>
+      <p class="nav-label">Explore</p>
+      <nav class="nav-list">
+        <button class="nav-item" data-section="music"><i class="fas fa-music"></i><span>Music</span></button>
+        <button class="nav-item" data-section="gaming"><i class="fas fa-gamepad"></i><span>Gaming</span></button>
+        <button class="nav-item" data-section="live"><i class="fas fa-tower-broadcast"></i><span>Live</span></button>
+      </nav>
+      <div class="sidebar-footer">© 2026 Pulse<br><span>Built for curious minds</span></div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
 
-            <!-- Videos Grid -->
-            <div class="videos-grid" id="videosGrid">
-                <!-- Videos will be loaded here -->
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Loading videos...</p>
-                </div>
-            </div>
-        </main>
+    <main class="main-content" id="mainContent">
+      <section class="hero-banner" id="heroBanner">
+        <div class="hero-copy"><p class="eyebrow">Curated for you</p><h1>Find your next<br><em>favorite thing.</em></h1><p class="hero-subtitle">Fresh ideas, deep dives, and the people making the internet interesting.</p><button class="primary-btn" id="heroBtn">Explore trending <i class="fas fa-arrow-right"></i></button></div>
+        <div class="hero-art"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="hero-card"><span class="live-pill"><i class="fas fa-circle"></i> live now</span><strong>Inside the<br>creative mind</strong><small>with Maya Chen</small><div class="hero-play"><i class="fas fa-play"></i></div></div></div>
+      </section>
+      <div class="content-heading"><div><p class="eyebrow" id="sectionKicker">Your daily mix</p><h2 id="sectionTitle">Watch next</h2></div><button class="text-btn" id="viewAllBtn">View all <i class="fas fa-arrow-right"></i></button></div>
+      <div class="category-row" id="categoryRow"></div>
+      <div class="video-grid" id="videoGrid"></div>
+      <div class="load-more" id="loadMore"><button class="secondary-btn">Load more <i class="fas fa-chevron-down"></i></button></div>
+    </main>
 
-        <!-- Video Player Modal -->
-        <div class="modal" id="playerModal">
-            <div class="modal-content">
-                <div class="player-header">
-                    <button class="close-btn" id="closePlayer">&times;</button>
-                </div>
-                <div class="video-container">
-                    <iframe id="videoFrame" width="100%" height="100%" 
-                            src="" frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen></iframe>
-                </div>
-                <div class="video-info" id="videoInfo">
-                    <h2 id="videoTitle">Video Title</h2>
-                    <div class="video-stats">
-                        <span id="videoViews">0 views</span>
-                        <span id="videoDate">Jan 1, 2024</span>
-                    </div>
-                    <div class="channel-info">
-                        <div class="channel-avatar">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                        <div class="channel-details">
-                            <h3 id="channelName">Channel Name</h3>
-                            <p id="channelSubs">0 subscribers</p>
-                        </div>
-                        <button class="subscribe-btn" id="subscribeBtn">Subscribe</button>
-                    </div>
-                    <div class="video-description" id="videoDescription">
-                        <p>Video description will appear here...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fab fa-youtube"></i>
-                    <span>YouTube Clone</span>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-section="home">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="#" class="nav-item" data-section="shorts">
-                    <i class="fas fa-bolt"></i>
-                    <span>Shorts</span>
-                </a>
-                <a href="#" class="nav-item" data-section="subscriptions">
-                    <i class="fas fa-play-circle"></i>
-                    <span>Subscriptions</span>
-                </a>
-                <hr class="divider">
-                <a href="#" class="nav-item" data-section="library">
-                    <i class="fas fa-folder"></i>
-                    <span>Library</span>
-                </a>
-                <a href="#" class="nav-item" data-section="history">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item" data-section="watch-later">
-                    <i class="fas fa-clock"></i>
-                    <span>Watch later</span>
-                </a>
-                <a href="#" class="nav-item" data-section="liked">
-                    <i class="fas fa-thumbs-up"></i>
-                    <span>Liked videos</span>
-                </a>
-                <hr class="divider">
-                <a href="#" class="nav-item" data-section="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="#" class="nav-item" data-section="help">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Help</span>
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Overlay -->
-        <div class="overlay" id="overlay"></div>
-    </div>
-
-    <script src="js/app.js"></script>
+    <div class="player-modal" id="playerModal" aria-hidden="true"><div class="player-panel"><button class="close-player" id="closePlayer" aria-label="Close player"><i class="fas fa-xmark"></i></button><div class="player-frame"><iframe id="videoFrame" title="Video player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div><div class="player-meta"><div><p class="eyebrow">Now playing</p><h2 id="playerTitle"></h2><p id="playerStats" class="muted"></p></div><button class="primary-btn" id="playerSubscribe">Subscribe</button></div><div class="player-actions"><button class="action-btn" id="likeBtn"><i class="far fa-thumbs-up"></i> <span>Like</span></button><button class="action-btn"><i class="far fa-bookmark"></i> Save</button><button class="action-btn"><i class="fas fa-share"></i> Share</button></div><p class="player-description" id="playerDescription"></p><div class="comments"><h3>Comments <span>128</span></h3><div class="comment"><div class="avatar">JM</div><div><strong>Jordan M.</strong><p>This is exactly what I needed today. The pacing is perfect.</p></div></div><div class="comment"><div class="avatar avatar-purple">RS</div><div><strong>Riley S.</strong><p>The visuals in this one are beautiful.</p></div></div></div></div></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+  <script src="js/app.js"></script>
 </body>
 </html>

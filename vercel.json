@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm --prefix web run build",
-  "outputDirectory": "web",
-  "installCommand": "npm --prefix web install",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
   "framework": null
 }
