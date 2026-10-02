@@ -39,6 +39,7 @@ export const feedQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   categoryId: z.string().optional(),
+  pageToken: z.string().optional(),
 });
 
 // ============================================
@@ -53,6 +54,7 @@ export const searchQuerySchema = z.object({
   duration: z.enum(['short', 'medium', 'long']).optional(),
   order: z.enum(['date', 'rating', 'relevance', 'title', 'videoCount', 'viewCount']).optional(),
   categoryId: z.string().optional(),
+  pageToken: z.string().optional(),
 });
 
 // ============================================

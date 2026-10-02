@@ -9,33 +9,62 @@ const videos = [
   { id: 'Hzevd8l3x7M', title: 'Why everyone is talking about indie games', channel: 'Pixel Common', creator: 'Pixel Common', views: '1.7M views', date: '3 weeks ago', duration: '14:33', category: 'Gaming', description: 'The tiny teams, big ideas, and strange new worlds behind the indie game renaissance.', avatar: 'https://i.pravatar.cc/80?img=68', thumb: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80' }
 ];
 const categories = ['All', 'Music', 'Mixes', 'Live', 'Gaming', 'News', 'Technology', 'Design', 'Travel', 'Recently uploaded'];
-const state = { section: 'home', category: 'All', query: '', liked: false, subscribed: false, visible: 8, loading: false };
+const state = { section: 'home', category: 'All', query: '', liked: false, subscribed: false, visible: 8, loading: false, apiItems: [], nextPageToken: '', requestId: 0, apiError: '' };
 const $ = (id) => document.getElementById(id);
 const categoryAliases = { News: ['Technology'], Live: ['Music'], Mixes: ['Music', 'Design', 'Technology'] };
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 
 function toast(message) { const element = $('toast'); if (!element) return; element.textContent = message; element.classList.add('show'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => element.classList.remove('show'), 2200); }
 function filtered() {
+  if (state.apiItems.length) return state.apiItems;
   let list = [...videos];
   if (state.category !== 'All' && state.category !== 'Recently uploaded') { const matches = categoryAliases[state.category] || [state.category]; list = list.filter((video) => matches.includes(video.category)); }
   if (state.query) { const query = state.query.toLowerCase(); list = list.filter((video) => `${video.title} ${video.creator} ${video.channel} ${video.category}`.toLowerCase().includes(query)); }
-  if (!list.length) return [];
-  // The preview loops the available catalog so every category remains scrollable.
-  return Array.from({ length: 12 }, () => list).flat();
+  return list;
+}
+function normalizeApiVideo(item) {
+  const duration = item.duration || '—';
+  return { id: item.youtubeVideoId || item.id, title: item.title, channel: item.channel?.name || item.channelTitle || 'YouTube creator', creator: item.channel?.name || item.channelTitle || 'YouTube creator', views: `${Number(item.viewCount || 0).toLocaleString()} views`, date: item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 'Recently uploaded', duration, category: 'YouTube', description: item.description || '', avatar: item.channel?.avatarUrl || 'https://i.pravatar.cc/80?img=12', thumb: item.thumbnailUrl };
+}
+async function fetchCatalog({ reset = false } = {}) {
+  const requestId = ++state.requestId;
+  if (reset) { state.apiItems = []; state.nextPageToken = ''; state.apiError = ''; state.visible = 8; renderVideos(); }
+  state.loading = true;
+  try {
+    const params = new URLSearchParams({ page: String(Math.floor(state.apiItems.length / 20) + 1), pageSize: '20' });
+    if (state.query) params.set('q', state.query); else { const categoryIds = { Music: '10', Gaming: '20', News: '25', Technology: '28' }; if (categoryIds[state.category]) params.set('categoryId', categoryIds[state.category]); }
+    if (state.nextPageToken) params.set('pageToken', state.nextPageToken);
+    const endpoint = state.query ? `/api/search?${params}` : `/api/feed?${params}`;
+    const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error(`API request failed (${response.status})`);
+    const payload = await response.json();
+    if (requestId !== state.requestId) return;
+    const incoming = (payload.items || []).map(normalizeApiVideo).filter((item) => item.id && item.thumb);
+    const existingIds = new Set(state.apiItems.map((item) => item.id));
+    state.apiItems = [...state.apiItems, ...incoming.filter((item) => !existingIds.has(item.id))];
+    state.nextPageToken = payload.nextPageToken || '';
+    state.apiError = '';
+    if (payload.isCached) toast('Showing cached YouTube results');
+  } catch (error) {
+    console.error('[v0] YouTube API request failed:', error);
+    state.apiError = 'Live search is temporarily unavailable. Please try again.';
+  } finally {
+    if (requestId === state.requestId) { state.loading = false; renderVideos(); }
+  }
 }
 function renderCategories() { $('categoryRow').innerHTML = categories.map((category) => `<button class="category-btn ${state.category === category ? 'active' : ''}" data-category="${category}">${category}</button>`).join(''); document.querySelectorAll('[data-category]').forEach((button) => button.addEventListener('click', () => { state.category = button.dataset.category; state.visible = 8; renderCategories(); renderVideos(); })); }
 function renderVideos() {
   const matches = filtered();
   const list = matches.slice(0, state.visible);
-  $('videoGrid').innerHTML = list.length ? list.map((video) => `<article class="video-card" data-video="${video.id}" tabindex="0"><div class="thumbnail"><img loading="lazy" src="${video.thumb}" alt="${escapeHtml(video.title)}"><span class="duration">${video.duration}</span></div><div class="video-details"><img class="creator-avatar" src="${video.avatar}" alt="${escapeHtml(video.channel)} avatar"><div><h3 class="video-title">${escapeHtml(video.title)}</h3><span class="channel-name">${escapeHtml(video.channel)} <i class="fas fa-check-circle" aria-label="Verified"></i></span><span class="video-meta">${video.views} · ${video.date}</span></div></div></article>`).join('') : `<div class="empty-state"><h3>No videos found</h3><p>Try another search or topic.</p></div>`;
+  $('videoGrid').innerHTML = list.length ? list.map((video) => `<article class="video-card" data-video="${video.id}" tabindex="0"><div class="thumbnail"><img loading="lazy" src="${video.thumb}" alt="${escapeHtml(video.title)}"><span class="duration">${video.duration}</span></div><div class="video-details"><img class="creator-avatar" src="${video.avatar}" alt="${escapeHtml(video.channel)} avatar"><div><h3 class="video-title">${escapeHtml(video.title)}</h3><span class="channel-name">${escapeHtml(video.channel)} <i class="fas fa-check-circle" aria-label="Verified"></i></span><span class="video-meta">${video.views} · ${video.date}</span></div></div></article>`).join('') : `<div class="empty-state"><h3>${escapeHtml(state.apiError || 'No videos found')}</h3><p>${state.apiError ? 'Check your connection and try again.' : 'Try another search or topic.'}</p></div>`;
   document.querySelectorAll('.video-card').forEach((card) => { const open = () => openPlayer(videos.find((video) => video.id === card.dataset.video)); card.addEventListener('click', open); card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } }); });
   $('loadMore').style.display = matches.length > state.visible ? 'block' : 'none';
 }
-function loadMore() { if (state.loading || state.visible >= filtered().length) return; state.loading = true; $('loadMore').classList.add('is-loading'); setTimeout(() => { state.visible += 8; state.loading = false; $('loadMore').classList.remove('is-loading'); renderVideos(); }, 180); }
+function loadMore() { if (state.loading || (!state.nextPageToken && state.apiItems.length)) return; $('loadMore').classList.add('is-loading'); if (state.apiItems.length || state.query || state.category !== 'All') fetchCatalog(); else { state.visible += 8; $('loadMore').classList.remove('is-loading'); renderVideos(); } }
 function openPlayer(video) { if (!video) return; $('videoFrame').src = `https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`; $('playerTitle').textContent = video.title; $('playerStats').textContent = `${video.channel} · ${video.views} · ${video.date}`; $('playerDescription').textContent = video.description; $('playerModal').classList.add('active'); $('playerModal').setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
 function closePlayer() { $('videoFrame').src = ''; $('playerModal').classList.remove('active'); $('playerModal').setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
-function setSection(section) { state.section = section; state.query = ''; $('searchInput').value = ''; state.category = { music: 'Music', gaming: 'Gaming', live: 'Live' }[section] || 'All'; state.visible = 8; document.querySelectorAll('.nav-item,.mobile-nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === section)); const titles = { home: ['Recommended', 'Home'], shorts: ['Quick hits', 'Shorts'], subscriptions: ['From your channels', 'Subscriptions'], history: ['Keep watching', 'History'], liked: ['Your favorites', 'Liked videos'], 'watch-later': ['Saved for later', 'Watch later'], music: ['Listen now', 'Music'], gaming: ['Press play', 'Gaming'], live: ['Happening now', 'Live'], library: ['Your collection', 'Library'] }; const [kicker, title] = titles[section] || titles.home; $('sectionKicker').textContent = kicker; $('sectionTitle').textContent = title; $('heroBanner').style.display = section === 'home' ? 'flex' : 'none'; renderCategories(); renderVideos(); $('sidebar').classList.remove('open'); $('overlay').classList.remove('open'); }
-function search() { state.query = $('searchInput').value.trim(); state.section = 'home'; state.category = 'All'; state.visible = 8; document.querySelectorAll('.nav-item,.mobile-nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === 'home')); $('suggestions').hidden = true; $('sectionKicker').textContent = state.query ? 'Search results' : 'Recommended'; $('sectionTitle').textContent = state.query ? `Results for “${state.query}”` : 'Home'; $('heroBanner').style.display = state.query ? 'none' : 'flex'; renderCategories(); renderVideos(); }
+function setSection(section) { state.section = section; state.query = ''; $('searchInput').value = ''; state.category = { music: 'Music', gaming: 'Gaming', live: 'Live' }[section] || 'All'; state.visible = 8; document.querySelectorAll('.nav-item,.mobile-nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === section)); const titles = { home: ['Recommended', 'Home'], shorts: ['Quick hits', 'Shorts'], subscriptions: ['From your channels', 'Subscriptions'], history: ['Keep watching', 'History'], liked: ['Your favorites', 'Liked videos'], 'watch-later': ['Saved for later', 'Watch later'], music: ['Listen now', 'Music'], gaming: ['Press play', 'Gaming'], live: ['Happening now', 'Live'], library: ['Your collection', 'Library'] }; const [kicker, title] = titles[section] || titles.home; $('sectionKicker').textContent = kicker; $('sectionTitle').textContent = title; $('heroBanner').style.display = section === 'home' ? 'flex' : 'none'; renderCategories(); renderVideos(); fetchCatalog({ reset: true }); $('sidebar').classList.remove('open'); $('overlay').classList.remove('open'); }
+function search() { state.query = $('searchInput').value.trim(); state.section = 'home'; state.category = 'All'; state.apiItems = []; state.nextPageToken = ''; state.visible = 8; document.querySelectorAll('.nav-item,.mobile-nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === 'home'));   $('suggestions').hidden = true; $('sectionKicker').textContent = state.query ? 'Search results' : 'Recommended'; $('sectionTitle').textContent = state.query ? `Results for “${state.query}”` : 'Home'; $('heroBanner').style.display = state.query ? 'none' : 'flex'; renderCategories(); renderVideos(); fetchCatalog({ reset: true }); }
 
 $('searchForm').addEventListener('submit', (event) => { event.preventDefault(); search(); });
 $('searchInput').addEventListener('input', (event) => { const query = event.target.value.trim().toLowerCase(); if (!query) { $('suggestions').hidden = true; return; } const matches = videos.filter((video) => `${video.title} ${video.creator} ${video.channel}`.toLowerCase().includes(query)).slice(0, 5); $('suggestions').innerHTML = matches.map((video) => `<button class="suggestion" data-suggest="${escapeHtml(video.title)}"><i class="fas fa-magnifying-glass"></i> ${escapeHtml(video.title)}</button>`).join(''); $('suggestions').hidden = !matches.length; document.querySelectorAll('[data-suggest]').forEach((button) => button.addEventListener('click', () => { $('searchInput').value = button.dataset.suggest; search(); })); });
@@ -52,6 +81,6 @@ $('saveBtn').addEventListener('click', () => toast('Saved to Watch later'));
 $('shareBtn').addEventListener('click', async () => { try { await navigator.clipboard.writeText(window.location.href); toast('Link copied'); } catch (error) { toast('Share link ready'); } });
 $('createBtn').addEventListener('click', () => toast('Create menu opened')); $('notificationBtn').addEventListener('click', () => toast('No new notifications')); $('profileBtn').addEventListener('click', () => toast('Account menu opened')); $('voiceBtn').addEventListener('click', () => toast('Voice search is not available in this preview'));
 renderCategories(); renderVideos();
-setTimeout(() => { if (filtered().length <= state.visible) { state.visible = 8; renderVideos(); } }, 0);
+fetchCatalog({ reset: true });
 window.addEventListener('error', (event) => { console.error('[v0] UI error:', event.error || event.message); });
 window.addEventListener('unhandledrejection', (event) => { console.error('[v0] Async UI error:', event.reason); });
